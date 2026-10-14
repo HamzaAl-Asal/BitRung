@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DifficultyLevel {
+  Easy
+  Medium
+  Hard
+  VeryHard
+  Master
+}
+
+enum CheckerType {
+  Exact
+  TokenCompare
+}
+
+enum ProblemStatus {
+  Draft
+  InReview
+  Published
+  Archived
+}
+
+enum TestCaseCategory {
+  Sample
+  Edge
+  Overflow
+  Random
+  Stress
+  AntiNaive
+}
+
+enum SubmissionStatus {
+  Queued
+  Processing
+  Accepted
+  WrongAnswer
+  CompilationError
+  RuntimeError
+  TimeLimitExceeded
+  MemoryLimitExceeded
+  InternalError
+}
+
+model Language {
+  id               Int               @id @default(autoincrement())
+  name             String            @unique @db.VarChar(64)
+  judge0LanguageId Int               @map("judge0_language_id")
+  compilerArgs     String?           @map("compiler_args") @db.VarChar(255)
+  timeMultiplier   Float             @default(1) @map("time_multiplier")
+  isEnabled        Boolean           @default(true) @map("is_enabled")
+  problems         ProblemLanguage[]
+  submissions      Submission[]
+
+  @@map("languages")
+}
+
+model Problem {
+  id                Int               @id @default(autoincrement())
+  slug              String            @unique @db.VarChar(120)
+  title             String            @db.VarChar(200)
+  statementMarkdown String            @map("statement_markdown")
+  inputDescription  String            @map("input_description")
+  outputDescription String            @map("output_description")
+  difficultyLevel   DifficultyLevel   @map("difficulty_level")
+  difficultyRating  Int               @map("difficulty_rating")
+  timeLimitMs       Int               @map("time_limit_ms")
+  memoryLimitMb     Int               @map("memory_limit_mb")
+  checkerType       CheckerType       @default(TokenCompare) @map("checker_type")
+  status            ProblemStatus     @default(Draft)
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  publishedAt       DateTime?         @map("published_at")
+  languages         ProblemLanguage[]
+  testCases         TestCase[]
+  submissions       Submission[]
+
+  @@index([status, difficultyLevel])
+  @@map("problems")
+}
+
+model ProblemLanguage {
+  problemId   Int      @map("problem_id")
+  languageId  Int      @map("language_id")
+  starterCode String   @map("starter_code")
+  problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  language    Language @relation(fields: [languageId], references: [id])
+
+  @@id([problemId, languageId])
+  @@map("problem_languages")
+}
+
+/// Hidden test data. Server-only: never return these fields from a route.
+model TestCase {
+  id             Int              @id @default(autoincrement())
+  problemId      Int              @map("problem_id")
+  input          String
+  expectedOutput String           @map("expected_output")
+  isSample       Boolean          @default(false) @map("is_sample")
+  sequence       Int
+  category       TestCaseCategory
+  createdAt      DateTime         @default(now()) @map("created_at")
+  problem        Problem          @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  results        SubmissionTestResult[]
+
+  @@unique([problemId, sequence])
+  @@map("test_cases")
+}
+
+model Submission {
+  id              String           @id @default(cuid())
+  /// Skeleton has no auth yet; a fixed dev user id stands in.
+  userId          String           @map("user_id") @db.VarChar(64)
+  problemId       Int              @map("problem_id")
+  languageId      Int              @map("language_id")
+  sourceCode      String           @map("source_code")
+  status          SubmissionStatus @default(Queued)
+  executionTimeMs Int?             @map("execution_time_ms")
+  memoryUsedKb    Int?             @map("memory_used_kb")
+  compilerOutput  String?          @map("compiler_output") @db.VarChar(8000)
+  passedCount     Int              @default(0) @map("passed_count")
+  totalCount      Int              @default(0) @map("total_count")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  completedAt     DateTime?        @map("completed_at")
+  problem         Problem          @relation(fields: [problemId], references: [id])
+  language        Language         @relation(fields: [languageId], references: [id])
+  results         SubmissionTestResult[]
+
+  @@index([userId, problemId])
+  @@index([status, createdAt])
+  @@map("submissions")
+}
+
+/// One row per test case per submission. The Judge0 token lives here (per test, not per batch).
+model SubmissionTestResult {
+  id           Int              @id @default(autoincrement())
+  submissionId String           @map("submission_id")
+  testCaseId   Int              @map("test_case_id")
+  judge0Token  String?          @map("judge0_token") @db.VarChar(64)
+  status       SubmissionStatus @default(Queued)
+  timeMs       Int?             @map("time_ms")
+  memoryKb     Int?             @map("memory_kb")
+  submission   Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  testCase     TestCase         @relation(fields: [testCaseId], references: [id])
+
+  @@unique([submissionId, testCaseId])
+  @@map("submission_test_results")
+}
