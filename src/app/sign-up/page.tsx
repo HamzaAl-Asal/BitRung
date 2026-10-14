@@ -7,7 +7,8 @@ import { signUp } from "@/lib/auth-actions";
 
 export const metadata: Metadata = { title: "Create an account" };
 
-export default async function Page({ searchParams }: { searchParams: { next?: string } }) {
+export default async function Page(props: { searchParams: Promise<{ next?: string }> }) {
+  const searchParams = await props.searchParams;
   if (await getCurrentUser()) redirect("/problems");
   const next = typeof searchParams.next === "string" && searchParams.next.startsWith("/") ? searchParams.next : undefined;
   return (

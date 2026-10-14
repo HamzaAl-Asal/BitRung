@@ -14,7 +14,7 @@ export async function createSession(userId: string): Promise<void> {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * DAY_MS);
   await prisma.session.create({ data: { id: hashToken(token), userId, expiresAt } });
-  cookies().set(SESSION_COOKIE, token, {
+  (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production" && process.env.INSECURE_COOKIES !== "1",
@@ -24,16 +24,16 @@ export async function createSession(userId: string): Promise<void> {
 }
 
 export async function destroySession(): Promise<void> {
-  const token = cookies().get(SESSION_COOKIE)?.value;
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (token) await prisma.session.deleteMany({ where: { id: hashToken(token) } });
-  cookies().delete(SESSION_COOKIE);
+  (await cookies()).delete(SESSION_COOKIE);
 }
 
 export type CurrentUser = { id: string; displayName: string; email: string; role: "User" | "Admin" };
 
 // Cached per request, so the header and the page share one lookup.
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  const token = cookies().get(SESSION_COOKIE)?.value;
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
   const session = await prisma.session.findUnique({
     where: { id: hashToken(token) },

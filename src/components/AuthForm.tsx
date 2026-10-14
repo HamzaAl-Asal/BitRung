@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import type { AuthFormState } from "@/lib/auth-actions";
 import styles from "./AuthForm.module.scss";
 
@@ -23,7 +24,7 @@ export default function AuthForm({
   action: (prev: AuthFormState, form: FormData) => Promise<AuthFormState>;
   next?: string;
 }) {
-  const [state, formAction] = useFormState(action, {});
+  const [state, formAction] = useActionState(action, {});
   const signUp = mode === "sign-up";
   const other = signUp ? "/sign-in" : "/sign-up";
   const otherHref = next ? `${other}?next=${encodeURIComponent(next)}` : other;

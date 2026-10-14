@@ -21,7 +21,8 @@ function href(q: CatalogueQuery, change: Partial<CatalogueQuery>) {
 
 const STATUSES = ["Solved", "Attempted", "Unsolved"] as const;
 
-export default async function ProblemsPage({ searchParams }: { searchParams: Record<string, string | string[]> }) {
+export default async function ProblemsPage(props: { searchParams: Promise<Record<string, string | string[]>> }) {
+  const searchParams = await props.searchParams;
   const query = catalogueQuery.parse(
     Object.fromEntries(Object.entries(searchParams).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
   );
