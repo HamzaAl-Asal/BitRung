@@ -10,16 +10,16 @@ import styles from "./workspace.module.scss";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const p = await getProblemDetail(params.slug, null);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const p = await getProblemDetail((await params).slug, null);
   return { title: p?.title ?? "Problem" };
 }
 
 const paragraphs = (text: string) => text.split(/\n\s*\n/).filter(Boolean);
 
-export default async function ProblemPage({ params }: { params: { slug: string } }) {
+export default async function ProblemPage({ params }: { params: Promise<{ slug: string }> }) {
   const user = await getCurrentUser();
-  const p = await getProblemDetail(params.slug, user?.id ?? null);
+  const p = await getProblemDetail((await params).slug, user?.id ?? null);
   if (!p) notFound();
   const used = user ? await usedToday(user.id) : null;
 

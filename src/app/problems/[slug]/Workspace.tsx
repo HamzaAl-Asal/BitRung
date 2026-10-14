@@ -134,7 +134,7 @@ export function Editor({ languages, signInHref }: { languages: Lang[]; signInHre
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [round, setRound] = useState(0);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Restore saved code and language after mount, so server and client render the same first.
   useEffect(() => {
