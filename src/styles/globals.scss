@@ -1,0 +1,240 @@
+@use "tokens" as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: $bg;
+  color: $ink;
+  font-family: $font-body;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: $font-display;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+pre,
+code,
+textarea.code {
+  font-family: $font-mono;
+}
+
+:focus-visible {
+  outline: 3px solid $focus;
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 48px;
+  @media (max-width: $phone) {
+    padding: 0 16px;
+  }
+}
+
+// Buttons and link-buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: $border;
+  border-radius: $radius-sm;
+  background: $surface;
+  color: $ink;
+  font: 700 15px/1.2 $font-body;
+  text-decoration: none;
+  cursor: pointer;
+  @include lift;
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: none;
+  }
+
+  &--primary {
+    background: $level-easy;
+    box-shadow: 4px 4px 0 $ink;
+  }
+  &--yellow {
+    background: $yellow;
+    box-shadow: $shadow-sm;
+  }
+  &--dark {
+    background: $ink;
+    color: $surface;
+    border-color: $ink;
+    box-shadow: 5px 5px 0 $pink;
+    &:hover {
+      box-shadow: 7px 7px 0 $pink;
+    }
+  }
+  &--lg {
+    padding: 16px 28px;
+    font-size: 18px;
+    border-radius: 14px;
+  }
+}
+
+// Rounded pills: nav links, filter chips, tags
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 18px;
+  border: $border;
+  border-radius: 999px;
+  background: $surface;
+  color: $ink;
+  font: 700 15px/1.2 $font-body;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  @include lift;
+
+  &[aria-current="page"],
+  &--active {
+    background: $yellow;
+    box-shadow: 4px 4px 0 $ink;
+  }
+  &--sm {
+    min-height: 0;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: default;
+    &:hover,
+    &:active {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}
+
+.card {
+  background: $surface;
+  border: $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+}
+
+// Difficulty level badge; colors follow the ladder.
+.level {
+  display: inline-block;
+  padding: 4px 14px;
+  border: $border;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  &[data-level="Easy"] {
+    background: $level-easy;
+  }
+  &[data-level="Medium"] {
+    background: $level-medium;
+  }
+  &[data-level="Hard"] {
+    background: $level-hard;
+  }
+  &[data-level="VeryHard"] {
+    background: $level-veryhard;
+  }
+  &[data-level="Master"] {
+    background: $level-master;
+  }
+}
+
+// Form fields
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  label {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  input,
+  select {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    background: $surface;
+    color: $ink;
+    border: $border;
+    border-radius: 14px;
+    box-shadow: 4px 4px 0 $ink;
+    font: 500 16px $font-body;
+  }
+}
+
+.error {
+  padding: 12px 16px;
+  border: $border;
+  border-radius: $radius-sm;
+  background: $level-veryhard;
+  font-weight: 500;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.96);
+  }
+  60% {
+    transform: scale(1.025);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 0.5s ease backwards;
+  }
+}

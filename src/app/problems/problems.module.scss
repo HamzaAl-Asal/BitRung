@@ -1,0 +1,116 @@
+@use "../../styles/tokens" as *;
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+  padding-bottom: 72px;
+}
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+}
+.h1 {
+  font-size: clamp(40px, 7vw, 56px);
+  letter-spacing: -0.03em;
+}
+.search {
+  flex: 1 1 300px;
+  max-width: 420px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.levelChip[aria-current="page"] {
+  &[data-level="Easy"] { background: $level-easy; }
+  &[data-level="Medium"] { background: $level-medium; }
+  &[data-level="Hard"] { background: $level-hard; }
+  &[data-level="VeryHard"] { background: $level-veryhard; }
+  &[data-level="Master"] { background: $level-master; }
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 $ink;
+  color: $ink;
+  text-decoration: none;
+  @include lift;
+}
+.status {
+  flex: none;
+  width: 104px;
+  padding: 4px 0;
+  border: $border;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  background: $surface;
+  &[data-status="Solved"] { background: $level-easy; }
+  &[data-status="Attempted"] { background: $level-medium; }
+}
+.name {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.title {
+  font: 800 21px/1.2 $font-display;
+}
+.tags {
+  font-size: 14px;
+  color: $muted;
+}
+.rating {
+  min-width: 48px;
+  text-align: right;
+  font-weight: 700;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 40px;
+  text-align: center;
+  background: $surface;
+  border: 2.5px dashed $ink;
+  border-radius: 16px;
+}
+.emptyTitle {
+  font: 800 24px $font-display;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+}
+.pagerLinks {
+  display: flex;
+  gap: 10px;
+}
