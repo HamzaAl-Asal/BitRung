@@ -1,0 +1,40 @@
+@use "../styles/tokens" as *;
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 28px/1 $font-display;
+  letter-spacing: -0.03em;
+  color: $ink;
+  text-decoration: none;
+}
+
+.semi {
+  color: $green;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  form {
+    display: contents;
+  }
+}
+
+.who {
+  font-weight: 700;
+  padding: 0 4px;
+}

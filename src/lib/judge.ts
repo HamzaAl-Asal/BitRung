@@ -3,6 +3,7 @@ import type { SubmissionStatus } from "@prisma/client";
 import { prisma } from "./prisma";
 import { submitBatch, getBatch, isFinished, type Judge0Result } from "./judge0";
 import { check } from "./checker";
+import { markSolved } from "./progress";
 
 const POLL_TIMEOUT_MS = 60_000;
 
@@ -27,7 +28,8 @@ export async function judgeSubmission(submissionId: string): Promise<void> {
     },
   });
   const { problem, language } = sub;
-  const tests = problem.testCases;
+  // A sample run only executes the visible samples.
+  const tests = sub.kind === "SampleRun" ? problem.testCases.filter((t) => t.isSample) : problem.testCases;
 
   try {
     await prisma.submission.update({
@@ -96,6 +98,7 @@ export async function judgeSubmission(submissionId: string): Promise<void> {
         completedAt: new Date(),
       },
     });
+    if (verdict === "Accepted" && sub.kind === "Submit") await markSolved(sub.userId, problem.id);
   } catch (err) {
     console.error(`judging ${sub.id} failed:`, (err as Error).message);
     await prisma.submission.update({

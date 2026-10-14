@@ -1,0 +1,51 @@
+// Playful design tokens, taken from the "Platform UX Designs" canvas.
+$bg: #ede7ff;
+$ink: #111111;
+$muted: #3f3a52;
+$surface: #ffffff;
+$code-bg: #fcfbff;
+$sample-bg: #fff4c2;
+$locked: #e3ddf5;
+
+$green: #1fb75b; // the semicolon
+$yellow: #ffd93d;
+$pink: #ff8fb1;
+$blue: #7cc7ff;
+$focus: #6b3fd0;
+
+$level-easy: #8ce99a;
+$level-medium: #ffd43b;
+$level-hard: #ffa94d;
+$level-veryhard: #ff8a8a;
+$level-master: #b197fc;
+
+$border: 2.5px solid $ink;
+$radius-sm: 12px;
+$radius: 18px;
+$shadow-sm: 3px 3px 0 $ink;
+$shadow: 5px 5px 0 $ink;
+
+$font-display: var(--font-display), "Bricolage Grotesque", system-ui, sans-serif;
+$font-body: var(--font-body), "DM Sans", system-ui, sans-serif;
+$font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+
+$phone: 640px;
+
+@mixin lift {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 $ink;
+  }
+  &:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 $ink;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:hover,
+    &:active {
+      transform: none;
+    }
+  }
+}

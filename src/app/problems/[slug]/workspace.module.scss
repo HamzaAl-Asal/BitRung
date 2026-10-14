@@ -1,0 +1,263 @@
+@use "../../../styles/tokens" as *;
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 40px;
+  @media (max-width: $phone) {
+    padding: 16px;
+  }
+}
+.headerLeft,
+.headerRight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+.headerRight {
+  gap: 10px;
+  button[aria-pressed="true"] {
+    background: $yellow;
+  }
+}
+.back {
+  min-height: 40px;
+  padding: 6px 16px;
+  font-size: 14px;
+}
+.quota {
+  padding: 6px 16px;
+  border: $border;
+  border-radius: 999px;
+  background: $blue;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 8px 40px 56px;
+  @media (max-width: $phone) {
+    padding: 8px 16px 40px;
+  }
+}
+
+.statement {
+  flex: 1 1 440px;
+  min-width: 0;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  @media (max-width: $phone) {
+    padding: 20px;
+  }
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: $muted;
+}
+.solved {
+  padding: 2px 12px;
+  border: $border;
+  border-radius: 999px;
+  background: $level-easy;
+  color: $ink;
+  font-weight: 700;
+}
+.title {
+  font-size: clamp(30px, 4vw, 38px);
+}
+.prose {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.65;
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  p {
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+.h2 {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+.samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sample {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: $sample-bg;
+  border: $border;
+  border-radius: $radius-sm;
+  pre {
+    margin: 0;
+    font: 500 14px/1.6 $font-mono;
+    overflow-x: auto;
+  }
+}
+.sampleLabel {
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tagList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workArea {
+  flex: 1 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.editorCard {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+.toolbarLeft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.select.select {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+.reset {
+  font-size: 14px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.code {
+  width: 100%;
+  min-height: 470px;
+  padding: 16px;
+  resize: vertical;
+  background: $code-bg;
+  color: $ink;
+  border: $border;
+  border-radius: $radius-sm;
+  font: 400 14px/1.7 $font-mono;
+  tab-size: 4;
+  @media (max-width: $phone) {
+    min-height: 320px;
+  }
+}
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: $muted;
+}
+
+.verdict {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: $surface;
+  &[data-tone="accepted"] { background: $level-easy; }
+  &[data-tone="samples"] { background: $sample-bg; }
+  &[data-tone="wrong"] { background: $level-veryhard; }
+  &[data-tone="slow"] { background: $level-medium; }
+  &[data-tone="crash"] { background: $level-hard; }
+  &[data-tone="compile"] { background: $level-master; }
+  &[data-tone="internal"] { background: $locked; }
+  @media (prefers-reduced-motion: no-preference) {
+    animation: pop 0.45s ease;
+  }
+}
+.verdictHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.verdictTitle {
+  font: 800 30px/1.1 $font-display;
+}
+.verdictMeta {
+  font: 500 14px $font-mono;
+}
+.tests {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+.test {
+  padding: 6px 4px;
+  text-align: center;
+  border: $border;
+  border-radius: 999px;
+  background: $surface;
+  font-weight: 700;
+  font-size: 13px;
+  &[data-state="fail"] {
+    background: $ink;
+    color: $surface;
+  }
+}
+.compiler {
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  padding: 12px;
+  background: $surface;
+  border: $border;
+  border-radius: $radius-sm;
+  font: 400 13px/1.5 $font-mono;
+  white-space: pre-wrap;
+}
+.note {
+  font-size: 14px;
+}

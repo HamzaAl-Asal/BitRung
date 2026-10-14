@@ -1,0 +1,27 @@
+.ladder {
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+}
+
+@keyframes climb {
+  0%, 12% { transform: translateY(72px); }
+  20%, 32% { transform: translateY(0); }
+  40%, 52% { transform: translateY(-72px); }
+  60%, 72% { transform: translateY(-144px); }
+  80%, 92% { transform: translateY(-216px); }
+  100% { transform: translateY(72px); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .climber {
+    animation: climb 7s ease-in-out infinite;
+  }
+}
+
+// Without motion, the climber rests at the top of the ladder, clear of the labels.
+@media (prefers-reduced-motion: reduce) {
+  .climber {
+    transform: translateY(-216px);
+  }
+}

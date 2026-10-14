@@ -11,7 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "test": "node --import tsx --test tests/*.test.ts",
-    "test:e2e": "tsx tests/e2e-verdicts.ts"
+    "test:e2e": "playwright test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -21,10 +21,12 @@
     "next": "14.2.15",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "sass": "1.79.5",
     "server-only": "0.0.1",
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@types/node": "20.16.11",
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.0",

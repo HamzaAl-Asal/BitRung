@@ -22,18 +22,48 @@ function solve(target: number, nums: number[]): string {
   throw new Error("no pair");
 }
 
+// Counts pairs i < j with a[i] + a[j] == target. The statement promises exactly one;
+// the seed refuses to write a test that breaks that promise.
+function countPairs(target: number, nums: number[]): number {
+  const seen = new Map<number, number>();
+  let pairs = 0;
+  for (const x of nums) {
+    pairs += seen.get(target - x) ?? 0;
+    seen.set(x, (seen.get(x) ?? 0) + 1);
+  }
+  return pairs;
+}
+
+const mod = (x: number, m: number) => ((x % m) + m) % m;
+
 // Builds a case with exactly one valid pair: every filler is 1 mod 4 and the two
 // pair values are 0 mod 4, so filler+filler and filler+pair can never equal target.
-function build(n: number, rand: () => number, maxAbs: number, pair?: [number, number], at?: [number, number]) {
+// With `trap`, target/2 is also planted on its own, which catches solutions that
+// pair an element with itself.
+function build(
+  n: number,
+  rand: () => number,
+  maxAbs: number,
+  opts: { at?: [number, number]; trap?: boolean; filler?: () => number } = {},
+) {
   const k = Math.floor(maxAbs / 4);
-  const filler = () => 4 * (Math.floor(rand() * (2 * k - 1)) - (k - 1)) + 1;
+  const filler = opts.filler ?? (() => 4 * (Math.floor(rand() * (2 * k - 1)) - (k - 1)) + 1);
   const quad = () => 4 * (Math.floor(rand() * (2 * k + 1)) - k);
-  const [a, b] = pair ?? [quad(), quad()];
+  let a = quad();
+  let b = quad();
+  // A trap value target/2 must be 2 mod 4, so it can't pair with anything either.
+  while (opts.trap && mod(a + b, 8) !== 4) b = quad();
   const nums = Array.from({ length: n }, filler);
-  let [i, j] = at ?? [Math.floor(rand() * n), Math.floor(rand() * n)];
-  while (j === i) j = Math.floor(rand() * n);
+  const free = () => Math.floor(rand() * n);
+  let [i, j] = opts.at ?? [free(), free()];
+  while (j === i) j = free();
   nums[i] = a;
   nums[j] = b;
+  if (opts.trap) {
+    let t = free();
+    while (t === i || t === j) t = free();
+    nums[t] = (a + b) / 2;
+  }
   return { target: a + b, nums };
 }
 
@@ -55,33 +85,60 @@ async function main() {
   const py = await prisma.language.findUniqueOrThrow({ where: { name: "Python 3" } });
 
   const rand = rng(20261014);
-  const cases: { input: string; category: TestCaseCategory; isSample?: boolean }[] = [];
+  const cases: { target: number; nums: number[]; category: TestCaseCategory; isSample?: boolean }[] = [];
   const add = (target: number, nums: number[], category: TestCaseCategory, isSample = false) =>
-    cases.push({ input: fmt(target, nums), category, isSample });
+    cases.push({ target, nums, category, isSample });
+  const gen = (n: number, maxAbs: number, category: TestCaseCategory, opts?: Parameters<typeof build>[3]) => {
+    const c = build(n, rand, maxAbs, opts);
+    add(c.target, c.nums, category);
+  };
 
+  // Samples
   add(9, [2, 7, 11, 15], "Sample", true);
-  add(6, [3, 2, 4], "Sample", true);
-  add(6, [3, 3], "Edge"); // minimum n, duplicate values
+  add(6, [3, 2, 4], "Sample", true); // 3 + 3 would be wrong: same position twice
+
+  // Edge cases
+  add(6, [3, 3], "Edge"); // minimum n, the pair is two equal values
   add(-8, [-3, 5, -5, 9], "Edge"); // negatives
   add(0, [0, 7, 0], "Edge"); // zeros
-  add(2_000_000_000, [1_000_000_000, -999_999_999, 1_000_000_000], "Overflow"); // target - x leaves 32-bit range
+  add(0, [-4, 9, 4], "Edge"); // target 0 from opposite signs
+  add(10, [5, 1, 9, 2], "Edge"); // 5 + 5 is the trap, 1 + 9 is the answer
+  add(2_000_000_000, [1_000_000_000, -999_999_999, 1_000_000_000], "Overflow"); // largest target
+  add(-2_000_000_000, [-1_000_000_000, 999_999_999, -1_000_000_000], "Overflow"); // smallest target
   {
-    const c = build(10, rand, 100);
-    add(c.target, c.nums, "Random");
+    // All fillers equal, pair at the two ends
+    const c = build(1_000, rand, 1_000_000, { at: [0, 999], filler: () => 13 });
+    add(c.target, c.nums, "Edge");
   }
   {
-    const c = build(1_000, rand, 1_000_000_000);
-    add(c.target, c.nums, "Random");
+    // Sorted ascending, then descending: catches answers given as sorted positions
+    const c = build(50, rand, 1_000);
+    const asc = [...c.nums].sort((x, y) => x - y);
+    add(c.target, asc, "Edge");
+    add(c.target, [...asc].reverse(), "Edge");
   }
-  {
-    const c = build(200_000, rand, 1_000_000_000);
-    add(c.target, c.nums, "Stress");
-  }
-  {
-    // Pair sits at the very end, so an O(n^2) scan does the maximum work.
-    const n = 200_000;
-    const c = build(n, rand, 1_000_000_000, undefined, [n - 2, n - 1]);
-    add(c.target, c.nums, "AntiNaive");
+
+  // Self-pair traps, and pairs far apart (catches adjacent-only checks)
+  gen(8, 100, "AntiNaive", { trap: true });
+  gen(40, 1_000, "AntiNaive", { trap: true });
+  gen(2_000, 1_000_000_000, "AntiNaive", { trap: true, at: [0, 1_999] });
+
+  // Random: many small, a few medium
+  for (let i = 0; i < 6; i++) gen(2 + Math.floor(rand() * 9), 50, "Random");
+  gen(500, 1_000_000_000, "Random");
+  gen(5_000, 1_000_000_000, "Random", { trap: true });
+
+  // Stress: maximum size. The last one puts the pair at the very end, so an O(n^2) scan does maximum work.
+  gen(200_000, 1_000_000_000, "Stress");
+  gen(200_000, 1_000_000_000, "Stress", { at: [199_998, 199_999] });
+
+  for (const [i, c] of cases.entries()) {
+    const pairs = countPairs(c.target, c.nums);
+    if (pairs !== 1) throw new Error(`Test ${i + 1} has ${pairs} valid pairs; the statement promises exactly one`);
+    if (c.nums.length < 2 || c.nums.length > 200_000) throw new Error(`Test ${i + 1}: n out of range`);
+    if (c.nums.some((x) => Math.abs(x) > 1_000_000_000) || Math.abs(c.target) > 2_000_000_000) {
+      throw new Error(`Test ${i + 1}: value out of range`);
+    }
   }
 
   const problem = await prisma.problem.upsert({
@@ -105,22 +162,32 @@ async function main() {
     },
   });
 
-  await prisma.testCase.deleteMany({ where: { problemId: problem.id } });
-  await prisma.testCase.createMany({
-    data: cases.map((c, i) => {
-      const [first, second] = c.input.split("\n");
-      const target = Number(first.split(" ")[1]);
-      const nums = second.split(" ").map(Number);
-      return {
+  // Replacing tests would orphan judged results, so only (re)write them while nobody has submitted.
+  const judged = await prisma.submissionTestResult.count({ where: { testCase: { problemId: problem.id } } });
+  if (judged === 0) {
+    await prisma.testCase.deleteMany({ where: { problemId: problem.id } });
+    await prisma.testCase.createMany({
+      data: cases.map((c, i) => ({
         problemId: problem.id,
-        input: c.input,
-        expectedOutput: solve(target, nums),
+        input: fmt(c.target, c.nums),
+        expectedOutput: solve(c.target, c.nums),
         isSample: c.isSample ?? false,
         sequence: i + 1,
         category: c.category,
-      };
-    }),
-  });
+      })),
+    });
+  } else {
+    console.log("Tests already judged against; leaving them as they are.");
+  }
+
+  for (const name of ["Arrays", "Hash map"]) {
+    const tag = await prisma.tag.upsert({ where: { name }, update: {}, create: { name } });
+    await prisma.problemTag.upsert({
+      where: { problemId_tagId: { problemId: problem.id, tagId: tag.id } },
+      update: {},
+      create: { problemId: problem.id, tagId: tag.id },
+    });
+  }
 
   const starters: Record<number, string> = {
     [cpp.id]: `#include <bits/stdc++.h>

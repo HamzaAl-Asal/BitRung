@@ -1,0 +1,29 @@
+@use "../styles/tokens" as *;
+
+.form {
+  width: 100%;
+  max-width: 460px;
+  margin: 24px auto 72px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  @media (max-width: $phone) {
+    padding: 22px;
+  }
+}
+.title {
+  font-size: 40px;
+  letter-spacing: -0.03em;
+}
+.hint {
+  font-size: 13px;
+  color: $muted;
+}
+.switch {
+  margin: 0;
+  font-weight: 500;
+  a {
+    font-weight: 700;
+  }
+}

@@ -34,7 +34,26 @@ export interface Judge0Result {
 // 13 Internal Error, 14 Exec Format Error.
 export const isFinished = (statusId: number) => statusId >= 3;
 
+// Judge0 refuses batches larger than MAX_SUBMISSION_BATCH_SIZE (20 by default).
+const MAX_BATCH = 20;
+function chunks<T>(items: T[]): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += MAX_BATCH) out.push(items.slice(i, i + MAX_BATCH));
+  return out;
+}
+
 export async function submitBatch(reqs: Judge0Request[]): Promise<string[]> {
+  const tokens: string[] = [];
+  for (const chunk of chunks(reqs)) tokens.push(...(await submitChunk(chunk)));
+  return tokens;
+}
+
+export async function getBatch(tokens: string[]): Promise<Judge0Result[]> {
+  const results = await Promise.all(chunks(tokens).map(getChunk));
+  return results.flat();
+}
+
+async function submitChunk(reqs: Judge0Request[]): Promise<string[]> {
   const body = {
     submissions: reqs.map((r) => ({
       language_id: r.languageId,
@@ -58,7 +77,7 @@ export async function submitBatch(reqs: Judge0Request[]): Promise<string[]> {
   });
 }
 
-export async function getBatch(tokens: string[]): Promise<Judge0Result[]> {
+async function getChunk(tokens: string[]): Promise<Judge0Result[]> {
   const fields = "token,status_id,stdout,stderr,compile_output,time,memory";
   const res = await fetch(
     `${JUDGE0_URL}/submissions/batch?tokens=${tokens.join(",")}&base64_encoded=true&fields=${fields}`,

@@ -36,6 +36,16 @@ enum TestCaseCategory {
   AntiNaive
 }
 
+enum Role {
+  User
+  Admin
+}
+
+enum SubmissionKind {
+  Submit
+  SampleRun
+}
+
 enum SubmissionStatus {
   Queued
   Processing
@@ -46,6 +56,68 @@ enum SubmissionStatus {
   TimeLimitExceeded
   MemoryLimitExceeded
   InternalError
+}
+
+model User {
+  id           String                @id @default(cuid())
+  email        String                @unique @db.VarChar(254)
+  displayName  String                @map("display_name") @db.VarChar(40)
+  passwordHash String                @map("password_hash") @db.VarChar(255)
+  role         Role                  @default(User)
+  createdAt    DateTime              @default(now()) @map("created_at")
+  sessions     Session[]
+  submissions  Submission[]
+  progress     UserProblemProgress[]
+
+  @@map("users")
+}
+
+/// The cookie holds a random token; only its SHA-256 hash is stored here.
+model Session {
+  id        String   @id @db.VarChar(64)
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Tag {
+  id       Int          @id @default(autoincrement())
+  name     String       @unique @db.VarChar(60)
+  problems ProblemTag[]
+
+  @@map("tags")
+}
+
+model ProblemTag {
+  problemId Int     @map("problem_id")
+  tagId     Int     @map("tag_id")
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([problemId, tagId])
+  @@index([tagId])
+  @@map("problem_tags")
+}
+
+/// Set only by the server. "Attempted" = a row exists with isSolved false.
+model UserProblemProgress {
+  userId          String    @map("user_id")
+  problemId       Int       @map("problem_id")
+  isBookmarked    Boolean   @default(false) @map("is_bookmarked")
+  isSolved        Boolean   @default(false) @map("is_solved")
+  firstSolvedAt   DateTime? @map("first_solved_at")
+  lastAttemptedAt DateTime? @map("last_attempted_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem         Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, problemId])
+  @@index([problemId])
+  @@map("user_problem_progress")
 }
 
 model Language {
@@ -62,24 +134,26 @@ model Language {
 }
 
 model Problem {
-  id                Int               @id @default(autoincrement())
-  slug              String            @unique @db.VarChar(120)
-  title             String            @db.VarChar(200)
-  statementMarkdown String            @map("statement_markdown")
-  inputDescription  String            @map("input_description")
-  outputDescription String            @map("output_description")
-  difficultyLevel   DifficultyLevel   @map("difficulty_level")
-  difficultyRating  Int               @map("difficulty_rating")
-  timeLimitMs       Int               @map("time_limit_ms")
-  memoryLimitMb     Int               @map("memory_limit_mb")
-  checkerType       CheckerType       @default(TokenCompare) @map("checker_type")
-  status            ProblemStatus     @default(Draft)
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
-  publishedAt       DateTime?         @map("published_at")
+  id                Int                   @id @default(autoincrement())
+  slug              String                @unique @db.VarChar(120)
+  title             String                @db.VarChar(200)
+  statementMarkdown String                @map("statement_markdown")
+  inputDescription  String                @map("input_description")
+  outputDescription String                @map("output_description")
+  difficultyLevel   DifficultyLevel       @map("difficulty_level")
+  difficultyRating  Int                   @map("difficulty_rating")
+  timeLimitMs       Int                   @map("time_limit_ms")
+  memoryLimitMb     Int                   @map("memory_limit_mb")
+  checkerType       CheckerType           @default(TokenCompare) @map("checker_type")
+  status            ProblemStatus         @default(Draft)
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+  publishedAt       DateTime?             @map("published_at")
   languages         ProblemLanguage[]
   testCases         TestCase[]
   submissions       Submission[]
+  tags              ProblemTag[]
+  progress          UserProblemProgress[]
 
   @@index([status, difficultyLevel])
   @@map("problems")
@@ -98,15 +172,15 @@ model ProblemLanguage {
 
 /// Hidden test data. Server-only: never return these fields from a route.
 model TestCase {
-  id             Int              @id @default(autoincrement())
-  problemId      Int              @map("problem_id")
+  id             Int                    @id @default(autoincrement())
+  problemId      Int                    @map("problem_id")
   input          String
-  expectedOutput String           @map("expected_output")
-  isSample       Boolean          @default(false) @map("is_sample")
+  expectedOutput String                 @map("expected_output")
+  isSample       Boolean                @default(false) @map("is_sample")
   sequence       Int
   category       TestCaseCategory
-  createdAt      DateTime         @default(now()) @map("created_at")
-  problem        Problem          @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  createdAt      DateTime               @default(now()) @map("created_at")
+  problem        Problem                @relation(fields: [problemId], references: [id], onDelete: Cascade)
   results        SubmissionTestResult[]
 
   @@unique([problemId, sequence])
@@ -114,25 +188,27 @@ model TestCase {
 }
 
 model Submission {
-  id              String           @id @default(cuid())
-  /// Skeleton has no auth yet; a fixed dev user id stands in.
-  userId          String           @map("user_id") @db.VarChar(64)
-  problemId       Int              @map("problem_id")
-  languageId      Int              @map("language_id")
-  sourceCode      String           @map("source_code")
-  status          SubmissionStatus @default(Queued)
-  executionTimeMs Int?             @map("execution_time_ms")
-  memoryUsedKb    Int?             @map("memory_used_kb")
-  compilerOutput  String?          @map("compiler_output") @db.VarChar(8000)
-  passedCount     Int              @default(0) @map("passed_count")
-  totalCount      Int              @default(0) @map("total_count")
-  createdAt       DateTime         @default(now()) @map("created_at")
-  completedAt     DateTime?        @map("completed_at")
-  problem         Problem          @relation(fields: [problemId], references: [id])
-  language        Language         @relation(fields: [languageId], references: [id])
+  id              String                 @id @default(cuid())
+  userId          String                 @map("user_id")
+  kind            SubmissionKind         @default(Submit)
+  problemId       Int                    @map("problem_id")
+  languageId      Int                    @map("language_id")
+  sourceCode      String                 @map("source_code")
+  status          SubmissionStatus       @default(Queued)
+  executionTimeMs Int?                   @map("execution_time_ms")
+  memoryUsedKb    Int?                   @map("memory_used_kb")
+  compilerOutput  String?                @map("compiler_output") @db.VarChar(8000)
+  passedCount     Int                    @default(0) @map("passed_count")
+  totalCount      Int                    @default(0) @map("total_count")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  completedAt     DateTime?              @map("completed_at")
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem         Problem                @relation(fields: [problemId], references: [id])
+  language        Language               @relation(fields: [languageId], references: [id])
   results         SubmissionTestResult[]
 
   @@index([userId, problemId])
+  @@index([userId, kind, createdAt])
   @@index([status, createdAt])
   @@map("submissions")
 }
